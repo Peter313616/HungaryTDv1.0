@@ -165,7 +165,11 @@ namespace hungaryTDv1
                 {
                     enemies[i].update(i);
                 }
-                double shortestDistance = 0;
+                for (int i = 0; i < towers.Count; i++)
+                {
+                    towers[i].Shoot();
+                }
+                /*double shortestDistance = 0;
                 for (int x = 0; x < towers.Count; x++)
                 {
                     for (int i = positions.Length - 1; i > -1; i = i - 50)
@@ -183,7 +187,7 @@ namespace hungaryTDv1
                             shortestDistance = TotalDistance;
                         }
                     }
-                }
+                }*/
             }
         }
 
@@ -291,7 +295,7 @@ namespace hungaryTDv1
                 tempRect.Width = 70;
             }
             cBackground.Children.Add(tempRect);
-            tempTower = new Tower(towerType, cBackground, cObstacles);
+            tempTower = new Tower(towerType, cBackground, cObstacles, positions, track);
         }
     }
 }
