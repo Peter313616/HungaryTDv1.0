@@ -21,7 +21,7 @@ namespace hungaryTDv1
         int speed;
         int power;
         Point origin;
-        Point enemy;
+        public Point enemy;
         Canvas canvas;
         double xDistance;
         double yDistance;
@@ -30,25 +30,24 @@ namespace hungaryTDv1
         Point CurrentLocation;
         Rectangle bullet;
         public double NumbOfTranforms = 0;
-        bool bulletDrawn;
+        public bool bulletDrawn;
         int counter = 1;
 
-        public Bullet(int s, int p, Point o, Point e, Canvas c)
+        public Bullet(int s, int p, Point o, Canvas c)
         {
             speed = s;
             power = p;
             origin = o;
-            enemy = e;
             canvas = c;
         }
 
-        public Point DrawBullet()
+        public Point DrawBullet(Point e)
         {
             if (bulletDrawn == false)
             {
+                enemy = e;
                 xDistance = 0;
                 yDistance = 0;
-
 
                 xDistance = enemy.X - origin.X;
                 yDistance = origin.Y - enemy.Y;
@@ -62,8 +61,8 @@ namespace hungaryTDv1
                 double angle = temp * 180 / Math.PI;
 
                 bullet = new Rectangle();
-                bullet.Height = 10;
-                bullet.Width = 5;
+                bullet.Height = 20;
+                bullet.Width = 10;
                 BitmapImage bi = new BitmapImage(new Uri("fork.png", UriKind.Relative));
                 bullet.Fill = new ImageBrush(bi);
                 canvas.Children.Add(bullet);
