@@ -13,289 +13,196 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
+
 namespace hungaryTDv1
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
-    public partial class MainWindow : Window
+    public class Tower
     {
-        public Rectangle background;
-        public Label lblMouseTest;
-        public Button tempTwrBtn;
-        public Rectangle tempRect;
-        public bool mouseTest;
-        public Button[] towerIcons = new Button[4];
-        Button btnStart = new Button();
-        public ImageBrush[] towerFill = new ImageBrush[4];
-        System.Windows.Threading.DispatcherTimer gameTimer = new System.Windows.Threading.DispatcherTimer();
-        public GameState gameState;
-        public enum GameState { play, store, test };
-        public TowerType towerType;
-        public enum TowerType { normal, police, family, tank }
-        public EnemyType enemyType;
-        public enum EnemyType { apple, pizza, donut, hamburger, fries }
-        public List<Enemy> enemies = new List<Enemy>();
-        public List<Tower> towers = new List<Tower>();
-        Tower tempTower;
-        public Polygon trackHit = new Polygon();
-        public Point[] track = new Point[1450];
-        public int[] positions = new int[1450];
-        StreamWriter sw;
-        StreamReader sr;
-        public MainWindow()
+        public Point Location;
+        int towerType;
+        Rectangle towerRect;
+        Canvas cBackground;
+        Canvas cObstacles;
+        int[] positions;
+        Point[] track;
+        List<int> targets = new List<int>();
+        int range;
+        int bSpeed;
+        int bPower;
+        Bullet b;
+        public Tower(int tT, Canvas cBack, Canvas cObs, int[] p, Point[] t)
         {
-            InitializeComponent();
-            btnStart.Height = 20;
-            btnStart.Width = 70;
-            btnStart.Content = "start";
-            btnStart.Click += BtnStart_Click;
-            cBackground.Children.Add(btnStart);
+            towerType = tT;
+            towerRect = new Rectangle();
+            cBackground = cBack;
+            cObstacles = cObs;
+            positions = p;
+            track = t;
+        }
+
+        public void DrawTower(Point l)
+        {
+            Location = l;
+            if (towerType == 0)//norm
+            {
+                range = 100;
+                bSpeed = 20;
+
+
+                BitmapImage bi = new BitmapImage(new Uri("normal.png", UriKind.Relative));
+                towerRect.Fill = new ImageBrush(bi);
+                Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(towerRect, Location.X - towerRect.Width / 2);
+                cBackground.Children.Add(towerRect);
+
+                Rectangle tempTower = new Rectangle();
+                tempTower.Height = towerRect.Height;
+                tempTower.Width = towerRect.Width;
+                tempTower.Fill = Brushes.Transparent;
+                Canvas.SetTop(tempTower, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(tempTower, Location.X - towerRect.Width / 2);
+                cObstacles.Children.Add(tempTower);
+                //MessageBox.Show(Canvas.GetTop(towerRect).ToString());
+            }
+            else if (towerType == 1)//popo
+            {
+                range = 150;
+                bSpeed = 20;
+
+                BitmapImage bi = new BitmapImage(new Uri("police.png", UriKind.Relative));
+                towerRect.Fill = new ImageBrush(bi);
+                Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(towerRect, Location.X - towerRect.Width / 2);
+                cBackground.Children.Add(towerRect);
+
+                Rectangle tempTower = new Rectangle();
+                tempTower.Height = towerRect.Height;
+                tempTower.Width = towerRect.Width;
+                tempTower.Fill = Brushes.Transparent;
+                Canvas.SetTop(tempTower, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(tempTower, Location.X - towerRect.Width / 2);
+                cObstacles.Children.Add(tempTower);
+            }
+            else if (towerType == 2)//fam
+            {
+                range = 50;
+                bSpeed = 20;
+
+                BitmapImage bi = new BitmapImage(new Uri("family.png", UriKind.Relative));
+                towerRect.Fill = new ImageBrush(bi);
+                Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(towerRect, Location.X - towerRect.Width / 2);
+                cBackground.Children.Add(towerRect);
+
+                Rectangle tempTower = new Rectangle();
+                tempTower.Height = towerRect.Height;
+                tempTower.Width = towerRect.Width;
+                tempTower.Fill = Brushes.Transparent;
+                Canvas.SetTop(tempTower, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(tempTower, Location.X - towerRect.Width / 2);
+                cObstacles.Children.Add(tempTower);
+            }
+            else//thicc
+            {
+                range = 50;
+                bSpeed = 20;
+
+                BitmapImage bi = new BitmapImage(new Uri("tank.png", UriKind.Relative));
+                towerRect.Fill = new ImageBrush(bi);
+                Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(towerRect, Location.X - towerRect.Width / 2);
+                cBackground.Children.Add(towerRect);
+
+                Rectangle tempTower = new Rectangle();
+                tempTower.Height = towerRect.Height;
+                tempTower.Width = towerRect.Width;
+                tempTower.Fill = Brushes.Transparent;
+                Canvas.SetTop(tempTower, Location.Y - towerRect.Height / 2);
+                Canvas.SetLeft(tempTower, Location.X - towerRect.Width / 2);
+                cObstacles.Children.Add(tempTower);
+            }
+
+            double shortestDistance = 0;
+            double startPosition = 0;
             for (int i = 0; i < positions.Length; i++)
             {
-                positions[i] = -1;
-            }
-            sr = new StreamReader("trackLine.txt");
-            int counter = 0;
-            while (!sr.EndOfStream)
-            {
-                string currentLine = sr.ReadLine();
-                double xPosition, yPosition;
-                double.TryParse(currentLine.Split(',')[0], out xPosition);
-                double.TryParse(currentLine.Split(',')[1], out yPosition);
-                Point point = new Point(xPosition, yPosition);
-                track[counter] = point;
-                counter++;
-            }
-            sr.Close();
-            gameState = GameState.play;
-        }
+                double xDistance = 0;
+                double yDistance = 0;
 
-        private void GameTimer_Tick(object sender, EventArgs e)
-        {
-            if (gameState == GameState.store)
-            {
-                Canvas.SetTop(tempRect, Mouse.GetPosition(cBackground).Y - tempRect.Height / 2);
-                Canvas.SetLeft(tempRect, Mouse.GetPosition(cBackground).X - tempRect.Width / 2);
-                /*bool valid = true;
-                double x = Mouse.GetPosition(cBackground).X;
-                double y = Mouse.GetPosition(cBackground).Y;
-                bool check1 = cObstacles.InputHitTest(new Point(x + tempRect.Width / 2 - 5, y + tempRect.Height / 2 - 5)) == null;
-                bool check2 = cObstacles.InputHitTest(new Point(x - tempRect.Width / 2 + 5, y + tempRect.Height / 2 - 5)) == null;
-                bool check3 = cObstacles.InputHitTest(new Point(x + tempRect.Width / 2 - 5, y - tempRect.Height / 2 + 5)) == null;
-                bool check4 = cObstacles.InputHitTest(new Point(x - tempRect.Width / 2 + 5, y - tempRect.Height / 2 + 5)) == null;
-                bool check5 = cObstacles.InputHitTest(new Point(x, y)) == null;
-                if (check1 && check2 && check3 && check4 && check5)
-                {
-                    valid = true;
-                    tempRect.Stroke = Brushes.Transparent;
-                }
-                else
-                {
-                    valid = false;
-                    tempRect.Stroke = Brushes.Red;
-                    tempRect.StrokeThickness = 5;
-                }*/
-                bool empty = tempTower.CheckTower();
-                if (empty)
-                {
-                    tempRect.Stroke = Brushes.Transparent;
-                }
-                else
-                {
-                    tempRect.Stroke = Brushes.Red;
-                    tempRect.StrokeThickness = 5;
-                }
+                xDistance = track[i].X - Location.X;
+                yDistance = Location.Y - track[i].Y;
 
-                MouseButtonState pmbs = MouseButtonState.Released;
-                if (Mouse.LeftButton == MouseButtonState.Pressed)
+                double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
+
+                if (shortestDistance > TotalDistance || shortestDistance == 0)
                 {
-                    if (empty)
-                    {
-                        Point temp = Mouse.GetPosition(cBackground);
-                        /*Rectangle tempRect2 = new Rectangle();
-                        tempRect2.Fill = tempRect.Fill;
-                        tempRect2.Width = tempRect.ActualWidth;
-                        tempRect2.Height = tempRect.ActualHeight;
-                        Canvas.SetTop(tempRect2, Canvas.GetTop(tempRect));
-                        Canvas.SetLeft(tempRect2, Canvas.GetLeft(tempRect));*/
-                        cBackground.Children.Remove(tempRect);
-                        //cBackground.Children.Add(tempRect2);
-                        //cObstacles.Children.Add(tempRect);
-                        tempTower.DrawTower(temp);
-                        towers.Add(tempTower);
-                    }
-                    else
-                    {
-                        cBackground.Children.Remove(tempRect);
-                    }
-                    cObstacles.Children.Remove(trackHit);
-                    gameState = GameState.play;
-                }
-                else
-                {
-                    pmbs = Mouse.LeftButton;
-                }
-            }
-            else if (gameState == GameState.test)
-            {
-                /*
-                 * MouseButtonState pmbs = MouseButtonState.Released;
-                if (Mouse.LeftButton == MouseButtonState.Pressed)
-                {
-                    Point temp = Mouse.GetPosition(cBackground);
-                    try
-                    {
-                        sw.WriteLine(temp.ToString());
-                    }
-                    catch (FileNotFoundException) //exception for if the file does not exist
-                    {
-                        sw.WriteLine(temp.ToString());
-                    }
-                }
-                else
-                {
-                    pmbs = Mouse.LeftButton;
-                }
-                */
-            }
-            else if (gameState == GameState.play)
-            {
-                for (int i = enemies.Count - 1; i > -1; i--)
-                {
-                    enemies[i].update(i);
-                }
-                for (int i = 0; i < towers.Count; i++)
-                {
-                    towers[i].Shoot();
-                }
-                /*double shortestDistance = 0;
-                for (int x = 0; x < towers.Count; x++)
-                {
-                    for (int i = positions.Length - 1; i > -1; i = i - 50)
-                    {
-                        double xDistance = 0;
-                        double yDistance = 0;
-
-                        xDistance = track[i].X - towers[x].Location.X;
-                        yDistance = towers[x].Location.Y - track[i].Y;
-
-                        double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
-
-                        if (shortestDistance > TotalDistance || shortestDistance == 0)
-                        {
-                            shortestDistance = TotalDistance;
-                        }
-                    }
-                }*/
-            }
-        }
-
-        private void BtnStart_Click(object sender, RoutedEventArgs e)
-        {
-            gameTimer.Tick += GameTimer_Tick;
-            gameTimer.Interval = new TimeSpan(0, 0, 0, 0, 1000 / 60);
-            gameTimer.Start();
-
-            sr = new StreamReader("trackBox.txt");
-            PointCollection myPointCollection = new PointCollection();
-            while (!sr.EndOfStream)
-            {
-                string currentLine = sr.ReadLine();
-                double xPosition, yPosition;
-                double.TryParse(currentLine.Split(',')[0], out xPosition);
-                double.TryParse(currentLine.Split(',')[1], out yPosition);
-                Point point = new Point(xPosition, yPosition);
-                myPointCollection.Add(point);
-            }
-            sr.Close();
-            trackHit.Points = myPointCollection;
-            trackHit.Fill = Brushes.Transparent;
-
-            cBackground.Children.Remove(btnStart);
-            background = new Rectangle();
-            background.Height = 650;
-            background.Width = 1125;
-            BitmapImage bi = new BitmapImage(new Uri("track.png", UriKind.Relative));
-            ImageBrush img = new ImageBrush(bi);
-            background.Fill = img;
-            cBackground.Children.Add(background);
-
-            tempTwrBtn = new Button();
-            tempTwrBtn.Height = 20;
-            tempTwrBtn.Width = 40;
-            tempTwrBtn.Content = "test";
-            tempTwrBtn.Click += TempTwrBtn_Click;
-            Canvas.SetTop(tempTwrBtn, 17);
-            Canvas.SetLeft(tempTwrBtn, 857);
-            cBackground.Children.Add(tempTwrBtn);
-
-            bi = new BitmapImage(new Uri("normal.png", UriKind.Relative));
-            towerFill[0] = new ImageBrush(bi);
-            bi = new BitmapImage(new Uri("police.png", UriKind.Relative));
-            towerFill[1] = new ImageBrush(bi);
-            bi = new BitmapImage(new Uri("family.png", UriKind.Relative));
-            towerFill[2] = new ImageBrush(bi);
-            bi = new BitmapImage(new Uri("tank.png", UriKind.Relative));
-            towerFill[3] = new ImageBrush(bi);
-            for (int i = 0; i < towerIcons.Length; i++)
-            {
-                towerIcons[i] = new Button();
-                towerIcons[i].Background = towerFill[i];
-                towerIcons[i].Height = 80;
-                towerIcons[i].Width = 80;
-                towerIcons[i].Click += iconsClick;
-                towerIcons[i].BorderBrush = Brushes.Transparent;
-                Canvas.SetTop(towerIcons[i], i * 150 + 60);
-                Canvas.SetLeft(towerIcons[i], 910);
-                cBackground.Children.Add(towerIcons[i]);
-            }
-            gameState = GameState.play;
-            enemies.Add(new Enemy((int)EnemyType.hamburger, cEnemies, cBackground, track, positions));
-            enemies.Add(new Enemy((int)EnemyType.apple, cEnemies, cBackground, track, positions));
-            enemies.Add(new Enemy((int)EnemyType.pizza, cEnemies, cBackground, track, positions));
-            enemies.Add(new Enemy((int)EnemyType.pizza, cEnemies, cBackground, track, positions));
-            enemies.Add(new Enemy((int)EnemyType.pizza, cEnemies, cBackground, track, positions));
-        }
-
-        private void TempTwrBtn_Click(object sender, RoutedEventArgs e)
-        {
-            gameState = GameState.test;
-        }
-        private void iconsClick(object sender, RoutedEventArgs e)
-        {
-            //sw.Close();
-            gameState = GameState.store;
-            cObstacles.Children.Add(trackHit);
-            Button button = sender as Button;
-            int towerType = -1;
-            for (int i = 0; i < towerIcons.Length; i++)
-            {
-                if (towerIcons[i] == button)
-                {
-                    towerType = i;
+                    shortestDistance = TotalDistance;
+                    startPosition = i;
                 }
             }
             
-            tempRect = new Rectangle();
-            tempRect.Fill = towerFill[towerType];
+            for (int i = (int)startPosition + range; i >= startPosition - range; i--)
+            {
+                targets.Add(i);
+            }
+
+            b = new Bullet(bSpeed, bPower, Location, cBackground);
+        }
+
+        public bool CheckTower()
+        {
+            Canvas.SetTop(towerRect, Mouse.GetPosition(cBackground).Y - towerRect.Height / 2);
+            Canvas.SetLeft(towerRect, Mouse.GetPosition(cBackground).X - towerRect.Width / 2);
             if (towerType < 2)
             {
-                tempRect.Height = 35;
-                tempRect.Width = 35;
+                towerRect.Height = 35;
+                towerRect.Width = 35;
             }
             else if (towerType == 2)
             {
-                tempRect.Height = 45;
-                tempRect.Width = 70;
+                towerRect.Height = 45;
+                towerRect.Width = 70;
             }
             else
             {
-                tempRect.Height = 70;
-                tempRect.Width = 70;
+                towerRect.Height = 70;
+                towerRect.Width = 70;
             }
-            cBackground.Children.Add(tempRect);
-            tempTower = new Tower(towerType, cBackground, cObstacles, positions, track);
+            bool valid = true;
+            double x = Mouse.GetPosition(cBackground).X;
+            double y = Mouse.GetPosition(cBackground).Y;
+            bool check1 = cObstacles.InputHitTest(new Point(x + this.towerRect.Width / 2 - 5, y + this.towerRect.Height / 2 - 5)) == null;
+            bool check2 = cObstacles.InputHitTest(new Point(x - this.towerRect.Width / 2 + 5, y + this.towerRect.Height / 2 - 5)) == null;
+            bool check3 = cObstacles.InputHitTest(new Point(x + this.towerRect.Width / 2 - 5, y - this.towerRect.Height / 2 + 5)) == null;
+            bool check4 = cObstacles.InputHitTest(new Point(x - this.towerRect.Width / 2 + 5, y - this.towerRect.Height / 2 + 5)) == null;
+            bool check5 = cObstacles.InputHitTest(new Point(x, y)) == null;
+            if (check1 && check2 && check3 && check4 && check5)
+            {
+                valid = true;
+            }
+            else
+            {
+                valid = false;
+            }
+            return valid;
+        }
+
+        public void Shoot()
+        {
+            Point frontEnemy = new Point(0,0);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                if (positions[targets[i]] != -1 && b.bulletDrawn == false)
+                {
+                    b.DrawBullet(track[targets[i]]);
+                    frontEnemy = track[targets[i]];
+                    i = targets.Count;
+                }
+            }
+            if (b.bulletDrawn)
+            {
+                b.DrawBullet(frontEnemy);
+            }
         }
     }
 }
