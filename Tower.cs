@@ -23,12 +23,18 @@ namespace hungaryTDv1
         Rectangle towerRect;
         Canvas cBackground;
         Canvas cObstacles;
-        public Tower(int tT, Canvas cBack, Canvas cObs)
+        int[] positions;
+        Point[] track;
+        List<Point> Target = new List<Point>();
+        int range;
+        public Tower(int tT, Canvas cBack, Canvas cObs, int[] p, Point[] t)
         {
             towerType = tT;
             towerRect = new Rectangle();
             cBackground = cBack;
             cObstacles = cObs;
+            positions = p;
+            track = t;
         }
 
         public void DrawTower(Point l)
@@ -36,6 +42,8 @@ namespace hungaryTDv1
             Location = l;
             if (towerType == 0)//norm
             {
+                range = 150;
+
                 BitmapImage bi = new BitmapImage(new Uri("normal.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
                 Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
@@ -53,6 +61,8 @@ namespace hungaryTDv1
             }
             else if (towerType == 1)//popo
             {
+                range = 300;
+
                 BitmapImage bi = new BitmapImage(new Uri("police.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
                 Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
@@ -69,6 +79,8 @@ namespace hungaryTDv1
             }
             else if (towerType == 2)//fam
             {
+                range = 50;
+
                 BitmapImage bi = new BitmapImage(new Uri("family.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
                 Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
@@ -85,6 +97,8 @@ namespace hungaryTDv1
             }
             else//thicc
             {
+                range = 50;
+
                 BitmapImage bi = new BitmapImage(new Uri("tank.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
                 Canvas.SetTop(towerRect, Location.Y - towerRect.Height / 2);
@@ -99,12 +113,28 @@ namespace hungaryTDv1
                 Canvas.SetLeft(tempTower, Location.X - towerRect.Width / 2);
                 cObstacles.Children.Add(tempTower);
             }
+            
+            for (int i = 0; i > positions.Length; i++)
+            {
+                double xDistance = 0;
+                double yDistance = 0;
+
+                xDistance = track[i].X - Location.X;
+                yDistance = Location.Y - track[i].Y;
+
+                double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
+
+                if (TotalDistance > range)
+                {
+                    Target.Add(track[i]);
+                }
+            }
         }
 
         public bool CheckTower()
         {
-            Canvas.SetTop(this.towerRect, Mouse.GetPosition(cBackground).Y - this.towerRect.Height / 2);
-            Canvas.SetLeft(this.towerRect, Mouse.GetPosition(cBackground).X - this.towerRect.Width / 2);
+            Canvas.SetTop(towerRect, Mouse.GetPosition(cBackground).Y - towerRect.Height / 2);
+            Canvas.SetLeft(towerRect, Mouse.GetPosition(cBackground).X - towerRect.Width / 2);
             if (towerType < 2)
             {
                 towerRect.Height = 35;
