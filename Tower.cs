@@ -25,8 +25,11 @@ namespace hungaryTDv1
         Canvas cObstacles;
         int[] positions;
         Point[] track;
-        List<Point> Target = new List<Point>();
+        List<int> targets = new List<int>();
         int range;
+        int bSpeed;
+        int bPower;
+        Bullet b;
         public Tower(int tT, Canvas cBack, Canvas cObs, int[] p, Point[] t)
         {
             towerType = tT;
@@ -42,7 +45,9 @@ namespace hungaryTDv1
             Location = l;
             if (towerType == 0)//norm
             {
-                range = 150;
+                range = 100;
+                bSpeed = 20;
+
 
                 BitmapImage bi = new BitmapImage(new Uri("normal.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
@@ -61,7 +66,8 @@ namespace hungaryTDv1
             }
             else if (towerType == 1)//popo
             {
-                range = 300;
+                range = 150;
+                bSpeed = 20;
 
                 BitmapImage bi = new BitmapImage(new Uri("police.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
@@ -80,6 +86,7 @@ namespace hungaryTDv1
             else if (towerType == 2)//fam
             {
                 range = 50;
+                bSpeed = 20;
 
                 BitmapImage bi = new BitmapImage(new Uri("family.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
@@ -98,6 +105,7 @@ namespace hungaryTDv1
             else//thicc
             {
                 range = 50;
+                bSpeed = 20;
 
                 BitmapImage bi = new BitmapImage(new Uri("tank.png", UriKind.Relative));
                 towerRect.Fill = new ImageBrush(bi);
@@ -113,8 +121,10 @@ namespace hungaryTDv1
                 Canvas.SetLeft(tempTower, Location.X - towerRect.Width / 2);
                 cObstacles.Children.Add(tempTower);
             }
-            
-            for (int i = 0; i > positions.Length; i++)
+
+            double shortestDistance = 0;
+            double startPosition = 0;
+            for (int i = 0; i < positions.Length; i++)
             {
                 double xDistance = 0;
                 double yDistance = 0;
@@ -124,11 +134,19 @@ namespace hungaryTDv1
 
                 double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
 
-                if (TotalDistance > range)
+                if (shortestDistance > TotalDistance || shortestDistance == 0)
                 {
-                    Target.Add(track[i]);
+                    shortestDistance = TotalDistance;
+                    startPosition = i;
                 }
             }
+            
+            for (int i = (int)startPosition + range; i >= startPosition - range; i--)
+            {
+                targets.Add(i);
+            }
+
+            b = new Bullet(bSpeed, bPower, Location, cBackground);
         }
 
         public bool CheckTower()
@@ -169,10 +187,22 @@ namespace hungaryTDv1
             return valid;
         }
 
-        public void Shoot(int Range, Point Target)
+        public void Shoot()
         {
-            Bullet shot = new Bullet(10, 1, Location, Target, cBackground);
-            shot.DrawBullet();
+            Point frontEnemy = new Point(0,0);
+            for (int i = 0; i < targets.Count; i++)
+            {
+                if (positions[targets[i]] != -1 && b.bulletDrawn == false)
+                {
+                    b.DrawBullet(track[targets[i]]);
+                    frontEnemy = track[targets[i]];
+                    i = targets.Count;
+                }
+            }
+            if (b.bulletDrawn)
+            {
+                b.DrawBullet(frontEnemy);
+            }
         }
     }
 }
