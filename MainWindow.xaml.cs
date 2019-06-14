@@ -165,17 +165,22 @@ namespace hungaryTDv1
                 {
                     enemies[i].update(i);
                 }
-                for (int i = positions.Length - 1; i > -1; i--)
+                double shortestDistance = 0;
+                for (int x = 0; x < towers.Count; x++)
                 {
-                    if (positions[i] != -1)
+                    for (int i = positions.Length - 1; i > -1; i = i - 50)
                     {
-                        try
+                        double xDistance = 0;
+                        double yDistance = 0;
+
+                        xDistance = track[i].X - towers[x].Location.X;
+                        yDistance = towers[x].Location.Y - track[i].Y;
+
+                        double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
+
+                        if (shortestDistance > TotalDistance || shortestDistance == 0)
                         {
-                            towers[0].Shoot(1000, track[i]);
-                        }
-                        catch
-                        {
-                            i = -1;
+                            shortestDistance = TotalDistance;
                         }
                     }
                 }
