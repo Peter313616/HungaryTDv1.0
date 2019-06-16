@@ -14,7 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
 
-namespace hungaryTDv1
+namespace HungaryTDv1
 {
     public class Tower
     {
@@ -29,8 +29,19 @@ namespace hungaryTDv1
         int range;
         int bSpeed;
         int bPower;
-        Bullet b;
-        public Tower(int tT, Canvas cBack, Canvas cObs, int[] p, Point[] t)
+        double shortestDistance = 0;
+        double startPosition = 0;
+        bool initialPlace = true;
+        Point bCurrentLocation;
+        Rectangle bullet;
+        int counter;
+        bool bulletDrawn;
+        double xMove;
+        double yMove;
+        double NumbOfTransforms;
+        double xDistance = 0;
+        double yDistance = 0;
+        public Tower(int tT, Canvas cBack, Canvas cObs, int[] p, Point[] t, Point l)
         {
             towerType = tT;
             towerRect = new Rectangle();
@@ -38,10 +49,6 @@ namespace hungaryTDv1
             cObstacles = cObs;
             positions = p;
             track = t;
-        }
-
-        public void DrawTower(Point l)
-        {
             Location = l;
             if (towerType == 0)//norm
             {
@@ -121,32 +128,6 @@ namespace hungaryTDv1
                 Canvas.SetLeft(tempTower, Location.X - towerRect.Width / 2);
                 cObstacles.Children.Add(tempTower);
             }
-
-            double shortestDistance = 0;
-            double startPosition = 0;
-            for (int i = 0; i < positions.Length; i++)
-            {
-                double xDistance = 0;
-                double yDistance = 0;
-
-                xDistance = track[i].X - Location.X;
-                yDistance = Location.Y - track[i].Y;
-
-                double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
-
-                if (shortestDistance > TotalDistance || shortestDistance == 0)
-                {
-                    shortestDistance = TotalDistance;
-                    startPosition = i;
-                }
-            }
-            
-            for (int i = (int)startPosition + range; i >= startPosition - range; i--)
-            {
-                targets.Add(i);
-            }
-
-            b = new Bullet(bSpeed, bPower, Location, cBackground);
         }
 
         public bool CheckTower()
@@ -189,19 +170,102 @@ namespace hungaryTDv1
 
         public void Shoot()
         {
-            Point frontEnemy = new Point(0,0);
+            if (initialPlace)
+            {
+                for (int i = 0; i < positions.Length; i++)
+                {
+                    xDistance = track[i].X - Location.X;
+                    yDistance = Location.Y - track[i].Y;
+
+                    double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
+
+                    if (shortestDistance > TotalDistance || shortestDistance == 0)
+                    {
+                        shortestDistance = TotalDistance;
+                        startPosition = i;
+                    }
+                }
+
+                for (int i = (int)startPosition + range; i >= startPosition - range; i--)
+                {
+                    targets.Add(i);
+                }
+                initialPlace = false;
+            }
+
+            Point frontEnemy = new Point(0, 0);
+
             for (int i = 0; i < targets.Count; i++)
             {
-                if (positions[targets[i]] != -1 && b.bulletDrawn == false)
+                if (positions[targets[i]] != -1 && bulletDrawn == false)
                 {
-                    b.DrawBullet(track[targets[i]]);
                     frontEnemy = track[targets[i]];
                     i = targets.Count;
                 }
             }
-            if (b.bulletDrawn)
+            
+            if (bulletDrawn == false && frontEnemy != new Point(0,0))
             {
-                b.DrawBullet(frontEnemy);
+                /*for (int i = 0; i < targets.Count; i++)
+                {
+                    if (positions[targets[i]] != -1 && b.bulletDrawn == false)
+                    {
+                        b.DrawBullet(track[targets[i]]);
+                        frontEnemy = track[targets[i]];
+                        i = targets.Count;
+                    }
+                }*/
+
+                xDistance = 0;
+                yDistance = 0;
+
+                xDistance = frontEnemy.X - Location.X;
+                yDistance = Location.Y - frontEnemy.Y;
+
+                double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
+                NumbOfTransforms = Math.Ceiling(TotalDistance / bSpeed);
+                xMove = xDistance / NumbOfTransforms;
+                yMove = yDistance / NumbOfTransforms;
+
+                double temp = Math.Atan(xDistance / yDistance);
+                double angle = temp * 180 / Math.PI;
+
+                bullet = new Rectangle();
+                bullet.Height = 20;
+                bullet.Width = 10;
+                BitmapImage bi = new BitmapImage(new Uri("fork.png", UriKind.Relative));
+                bullet.Fill = new ImageBrush(bi);
+                cBackground.Children.Add(bullet);
+
+                if (frontEnemy.Y > Location.Y)
+                {
+                    angle += 180;
+                    RotateTransform rotate = new RotateTransform(angle);
+                    bullet.RenderTransformOrigin = new Point(0.5, 0.5);
+                    bullet.RenderTransform = rotate;
+                }
+                else
+                {
+                    RotateTransform rotate = new RotateTransform(angle);
+                    bullet.RenderTransformOrigin = new Point(0.5, 0.5);
+                    bullet.RenderTransform = rotate;
+                }
+                bulletDrawn = true;
+                bCurrentLocation = Location;
+            }
+            else if (bulletDrawn)
+            {
+                bCurrentLocation.X = Location.X + (xMove * counter);
+                bCurrentLocation.Y = Location.Y - (yMove * counter);
+                Canvas.SetLeft(bullet, bCurrentLocation.X);
+                Canvas.SetTop(bullet, bCurrentLocation.Y);
+                counter++;
+                if (bCurrentLocation == frontEnemy || counter == 20)
+                {
+                    cBackground.Children.Remove(bullet);
+                    bulletDrawn = false;
+                    counter = 1;
+                }
             }
         }
     }
