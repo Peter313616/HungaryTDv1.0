@@ -13,7 +13,8 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
-namespace hungaryTDv1
+
+namespace HungaryTDv1
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -122,8 +123,10 @@ namespace hungaryTDv1
                         cBackground.Children.Remove(tempRect);
                         //cBackground.Children.Add(tempRect2);
                         //cObstacles.Children.Add(tempRect);
-                        tempTower.DrawTower(temp);
+                        //tempTower.DrawTower(temp);
+                        tempTower.Location = temp;
                         towers.Add(tempTower);
+                        
                     }
                     else
                     {
@@ -176,12 +179,9 @@ namespace hungaryTDv1
                     {
                         double xDistance = 0;
                         double yDistance = 0;
-
                         xDistance = track[i].X - towers[x].Location.X;
                         yDistance = towers[x].Location.Y - track[i].Y;
-
                         double TotalDistance = Math.Sqrt(Math.Pow(xDistance, 2) + Math.Pow(yDistance, 2));
-
                         if (shortestDistance > TotalDistance || shortestDistance == 0)
                         {
                             shortestDistance = TotalDistance;
@@ -276,7 +276,7 @@ namespace hungaryTDv1
                     towerType = i;
                 }
             }
-            
+
             tempRect = new Rectangle();
             tempRect.Fill = towerFill[towerType];
             if (towerType < 2)
@@ -295,7 +295,7 @@ namespace hungaryTDv1
                 tempRect.Width = 70;
             }
             cBackground.Children.Add(tempRect);
-            tempTower = new Tower(towerType, cBackground, cObstacles, positions, track);
+            tempTower = new Tower(towerType, cBackground, cObstacles, positions, track, Mouse.GetPosition(cBackground));
         }
     }
 }
